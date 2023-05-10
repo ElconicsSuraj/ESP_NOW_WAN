@@ -1,0 +1,113 @@
+// This is gateway ndoe responisible for seding data over cloud by receiving data from master node via UART communication
+#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
+//#include <WiFi.h>
+#include <FirebaseESP32.h>
+
+
+#define RXp2 16
+#define TXp2 17
+
+#define FIREBASE_HOST "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#define FIREBASE_AUTH "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#define WIFI_SSID "Elconics"
+#define WIFI_PASSWORD "Elconics@123"
+
+
+//Define FirebaseESP32 data object
+FirebaseData firebaseData;
+FirebaseJson json;
+
+void setup() {
+  WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+  // it is a good practice to make sure your code sets wifi mode how you want it.
+
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  Serial2.begin(115200, SERIAL_8N1, RXp2, TXp2);
+  //WiFiManager, Local intialization. Once its business is done, there is no need to keep it around
+  WiFiManager wm;
+
+  // reset settings - wipe stored credentials for testing
+  // these are stored by the esp library
+  //wm.resetSettings();
+
+  // Automatically connect using saved credentials,
+  // if connection fails, it starts an access point with the specified name ( "AutoConnectAP"),
+  // if empty will auto generate SSID, if password is blank it will be anonymous AP (wm.autoConnect())
+  // then goes into a blocking loop awaiting configuration and will return success result
+
+  bool res;
+  // res = wm.autoConnect(); // auto generated AP name from chipid
+  res = wm.autoConnect("AutoConnectAP"); // anonymous ap
+  //  res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
+
+  if (!res) {
+    Serial.println("Failed to connect");
+    // ESP.restart();
+  }
+  else {
+    //if you get here you have connected to the WiFi
+    Serial.println("connected...yeey :)");
+  }
+
+  WiFi.begin();
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
+
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  Firebase.reconnectWiFi(true);
+
+  //Set database read timeout to 1 minute (max 15 minutes)
+  Firebase.setReadTimeout(firebaseData, 1000 * 60);
+  //tiny, small, medium, large and unlimited.
+  //Size and its write timeout e.g. tiny (1s), small (10s), medium (30s) and large (60s).
+  Firebase.setwriteSizeLimit(firebaseData, "tiny");
+
+  /*
+    This option allows get and delete functions (PUT and DELETE HTTP requests) works for device connected behind the
+    Firewall that allows only GET and POST requests.
+
+    Firebase.enableClassicRequest(firebaseData, true);
+  */
+
+  //String path = "/data";
+
+
+  Serial.println("------------------------------------");
+  Serial.println("Connected...");
+
+
+}
+
+
+void loop()
+{
+  while (Serial.available() < 0)
+  {
+    Serial.print("NO DATA");
+
+  }
+  Serial.flush();
+  Serial.println("Message Received: ");
+  Serial.println(Serial2.readString());
+  String Data = Serial2.readString();
+
+
+  json.set("/Data", Data); // Place your sensor data here
+  json.set("/Temperature", Data.substring(19, 23));
+  json.set("/Humidity",  Data.substring(25, 30));
+
+  Firebase.updateNode(firebaseData, "/Sensor", json);
+
+  delay(3000);
+
+
+}
