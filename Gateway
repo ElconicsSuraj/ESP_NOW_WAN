@@ -1,4 +1,3 @@
-// This is gateway ndoe responisible for seding data over cloud by receiving data from master node via UART communication
 #include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 //#include <WiFi.h>
 #include <FirebaseESP32.h>
@@ -7,8 +6,8 @@
 #define RXp2 16
 #define TXp2 17
 
-#define FIREBASE_HOST "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-#define FIREBASE_AUTH "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#define FIREBASE_HOST "https://espnow-cf748-default-rtdb.asia-southeast1.firebasedatabase.app/"
+#define FIREBASE_AUTH "AIzaSyCJkXWz0ubQ4gLBWqrr75su1dNVMYNG2T8"
 #define WIFI_SSID "Elconics"
 #define WIFI_PASSWORD "Elconics@123"
 
@@ -90,11 +89,7 @@ void setup() {
 
 void loop()
 {
-  while (Serial.available() < 0)
-  {
-    Serial.print("NO DATA");
 
-  }
   Serial.flush();
   Serial.println("Message Received: ");
   Serial.println(Serial2.readString());
@@ -102,12 +97,13 @@ void loop()
 
 
   json.set("/Data", Data); // Place your sensor data here
-  json.set("/Temperature", Data.substring(19, 23));
-  json.set("/Humidity",  Data.substring(25, 30));
+  json.set("/id", Data.substring(18, 22)); // Place your sensor data here
+  json.set("/Temperature", Data.substring(22, 27));
+  json.set("/Humidity",  Data.substring(29, 34));
 
   Firebase.updateNode(firebaseData, "/Sensor", json);
 
   delay(3000);
 
-
+  Data = "";
 }
