@@ -1,5 +1,4 @@
-// This is node code
-
+// This is node 1 code
 #include <esp_now.h>
 #include <WiFi.h>
 
@@ -16,6 +15,8 @@ uint8_t broadcastAddress[] = {0x78, 0xE3, 0x6D, 0x0B, 0x47, 0x20}; // 78:E3:6D:0
 // Structure example to send data
 // Must match the receiver structure
 typedef struct struct_message {
+
+  int id;
   float t;
   float h;
 
@@ -99,8 +100,10 @@ void loop() {
 
   // Set values to send
 
+  myData.id=1;
   myData.t = t;
   myData.h = h;
+  
 
 
   // Send message via ESP-NOW
