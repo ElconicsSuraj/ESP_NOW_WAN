@@ -1,4 +1,4 @@
-// This code is for master. it is receiving the temp and humidity data from receiver node
+// This is Receiver node receiving data from nodes
 
 #include <esp_now.h>
 #include <WiFi.h>
@@ -6,6 +6,7 @@
 // Structure example to receive data
 // Must match the sender structure
 typedef struct struct_message {
+  int id;
   float t;
   float h;
 
@@ -19,6 +20,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&myData, incomingData, sizeof(myData));
   Serial.print("Bytes received: ");
   Serial.println(len);
+  Serial.println(myData.id);
   Serial.println(myData.t);
   Serial.println(myData.h);
   Serial.println();
